@@ -116,7 +116,7 @@ class LoadBalancer:
                 best_server = s
         assert(best_server != None)
 
-        print(f"{time.localtime()}: recieved request {msg.encode('ASCII')} from {client_addr}, sending to {best_server.get_name()}-----")
+        print("{}: recieved request {} from {}, sending to {}-----".format(time.localtime(), msg.encode('ASCII'), client_addr, best_server.get_name()))
         return best_server.send_and_recv(msg, best_cost)
 
 
