@@ -74,7 +74,7 @@ class Server:
         return res
 
     def get_name(self):
-        return self.__socket.getpeername()
+        return self.__socket.getpeername()[0]
 
 
 class LoadBalancer:
@@ -116,7 +116,7 @@ class LoadBalancer:
                 best_server = s
         assert(best_server != None)
 
-        print("{}: recieved request {} from {}, sending to {}-----".format(time.localtime(), msg.encode('ASCII'), client_addr, best_server.get_name()))
+        print("{}: recieved request {} from {}, sending to {}-----".format(datetime.datetime.now(), msg.decode('ASCII'), client_addr[0], best_server.get_name()))
         return best_server.send_and_recv(msg, best_cost)
 
 
