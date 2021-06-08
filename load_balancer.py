@@ -7,30 +7,30 @@ import datetime
 
 
 class Job:
-    def __init__(self, job_kind: str, job_len: int): #expect time in sec. save in ns
-        self.kind: str = job_kind
-        self.cost: int = job_len * (10 ** 9)
+    def __init__(self, job_kind, job_len): #expect time in sec. save in ns
+        self.kind = job_kind
+        self.cost = job_len * (10 ** 9)
 
 class Server:
-    def __init__(self, kind: str, address: str, port_no: int = 80):
+    def __init__(self, kind, address, port_no = 80):
         assert(kind == "V" or kind == "M")
-        self.__queued_jobs: int = 0             # Amount of jobs queued on the server
-        self.__t_avail: int = time.time_ns()    # Point in time where the server will be available
-        self.__kind: str = kind                 # Server kind: "V" for video, "M" for music
+        self.__queued_jobs = 0             # Amount of jobs queued on the server
+        self.__t_avail = time.time_ns()    # Point in time where the server will be available
+        self.__kind = kind                 # Server kind: "V" for video, "M" for music
         self.__mutex = threading.Lock()
 
-        self.__socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)    # Server-type socket for the clients
+        self.__socket= socket.socket(socket.AF_INET, socket.SOCK_STREAM)    # Server-type socket for the clients
         self.__socket.connect((address, port_no))
 
 
     # Returns how much longer will the server be busy
-    def __get_tbusy(self) -> int:
+    def __get_tbusy(self):
         if self.__queued_jobs == 0:
             return 0
         return self.__t_avail - time.time_ns()
 
     # Returns how much a specific job will cost (in ns) on this server
-    def __get_job_cost(self, job: Job) -> int:
+    def __get_job_cost(self, job):
         if self.__kind == "V":
             if job.kind == "V" or job.kind == "P":
                 return job.cost
@@ -46,14 +46,14 @@ class Server:
                 return job.cost * 3
 
     # Returns the total cost of this server
-    def get_cost(self, job: Job) -> int:
+    def get_cost(self, job):
         self.__mutex.acquire()
         res = self.__get_tbusy() + self.__get_job_cost(job)
         self.__mutex.release()
         return res
 
     # sends 
-    def send_and_recv(self, msg: bytes, cost: int) -> bytes:
+    def send_and_recv(self, msg, cost):
         self.__mutex.acquire() # Updating the server's queue state
         if self.__queued_jobs == 0:
             self.__t_avail = time.time_ns()
@@ -78,7 +78,7 @@ class Server:
 
 
 class LoadBalancer:
-    def __init__(self, address: str = "10.0.0.1", port_no: int = 80, client_count: int = 5):
+    def __init__(self, address = "10.0.0.1", port_no = 80, client_count = 5):
         print("LB started-----")
         self.__server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__server_sock.bind((address, port_no))
@@ -97,7 +97,7 @@ class LoadBalancer:
             t = threading.Thread(target=self.__run_client, args=(client_sock,))
             t.start()
 
-    def __run_client(self, client_sock: socket.socket):
+    def __run_client(self, client_sock):
         data = client_sock.recv(2)
         assert(data)
         res = self.__send_to_servers(data, client_sock.getpeername())
@@ -105,7 +105,7 @@ class LoadBalancer:
         client_sock.close()
 
 
-    def __send_to_servers(self, msg: bytes, client_addr: str) -> bytes:
+    def __send_to_servers(self, msg, client_addr):
         j = Job(chr(msg[0]), int(chr(msg[1])))
         best_server = None
         best_cost = 2 ** 31 # that's safe, right?
