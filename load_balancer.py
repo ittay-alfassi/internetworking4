@@ -9,13 +9,13 @@ import datetime
 class Job:
     def __init__(self, job_kind, job_len): #expect time in sec. save in ns
         self.kind = job_kind
-        self.cost = job_len * (10 ** 9)
+        self.cost = job_len
 
 class Server:
     def __init__(self, kind, address, port_no = 80):
         assert(kind == "V" or kind == "M")
         self.__queued_jobs = 0             # Amount of jobs queued on the server
-        self.__t_avail = time.time_ns()    # Point in time where the server will be available
+        self.__t_avail = time.time()    # Point in time where the server will be available
         self.__kind = kind                 # Server kind: "V" for video, "M" for music
         self.__mutex = threading.Lock()
 
@@ -27,7 +27,7 @@ class Server:
     def __get_tbusy(self):
         if self.__queued_jobs == 0:
             return 0
-        return self.__t_avail - time.time_ns()
+        return self.__t_avail - time.time()
 
     # Returns how much a specific job will cost (in ns) on this server
     def __get_job_cost(self, job):
@@ -56,7 +56,7 @@ class Server:
     def send_and_recv(self, msg, cost):
         self.__mutex.acquire() # Updating the server's queue state
         if self.__queued_jobs == 0:
-            self.__t_avail = time.time_ns()
+            self.__t_avail = time.time()
         self.__queued_jobs += 1
         self.__t_avail += cost
         self.__mutex.release()
@@ -68,7 +68,7 @@ class Server:
         self.__mutex.acquire() # Updating the server's queue state
         self.__queued_jobs -= 1
         if self.__queued_jobs == 0:
-            self.__t_avail = time.time_ns()
+            self.__t_avail = time.time()
         self.__mutex.release()
 
         return res
@@ -126,6 +126,5 @@ def main():
     lb.run()
     
 
-if __name__ == "main":
-    main()
+main()
 
